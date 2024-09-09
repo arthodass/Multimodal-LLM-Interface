@@ -65,10 +65,6 @@ File Descriptions
 	•	index.html: Contains the HTML and CSS for the user interface. It handles user interactions and displays the chat bubbles.
 	•	main.py: Contains the Flask application logic. It processes user input, converts images to base64, interacts with the LLaVA model, and returns the response.
 
-License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 Acknowledgments
 
 	•	LangChain Community: For the LLaVA model integration.
