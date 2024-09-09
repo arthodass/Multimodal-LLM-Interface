@@ -33,12 +33,14 @@ This project is a web application designed to generate test-case instructions us
    cd <repository-directory>
 
 2. **Create a Virtual Environment**
-
+    
+    ```bash
     python -m venv venv
     source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
 3. **Install the dependencies**
 
+    ```bash
     pip install -r requirements.txt
 
 4.	**Download and set up the LLaVA model:**
