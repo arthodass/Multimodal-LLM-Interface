@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Test Case Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 90vw;
+            max-width: 100%;
+            height: 90vh;
+            max-height: 100%;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #343541;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        .chat-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-bubble {
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 75%;
+            line-height: 1.5;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+        .chat-bubble.user {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+        .chat-bubble.bot {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+        .chat-bubble pre {
+            white-space: pre-wrap; /* Preserve white space and new lines */
+            word-wrap: break-word; /* Ensure long lines wrap */
+            margin: 0; /* Remove margin from pre tag */
+        }
+        .chat-footer {
+            padding: 15px;
+            display: flex;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            align-items: center;
+        }
+        .chat-footer input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .chat-footer input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .custom-file-upload:hover {
+            background-color: #0069d9;
+        }
+        .chat-footer button {
+            background-color: #343541;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .chat-footer button:hover {
+            background-color: #4e4f56;
+        }
+        .file-preview {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        .file-preview img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        Multi-modal LLM Test-case Generator
+    </div>
+    <div class="chat-body" id="chat-body">
+        <!-- Chat bubbles will be dynamically inserted here -->
+    </div>
+    <form id="test-form" class="chat-footer" enctype="multipart/form-data" method="POST">
+        <input type="text" id="context" name="context" placeholder="Enter your message..." required>
+        <label for="images" class="custom-file-upload">Upload</label>
+        <input type="file" id="images" name="images" accept="image/*" multiple>
+        <button type="submit">Send</button>
+    </form>
+    <div class="file-preview" id="file-preview"></div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('images');
+    const filePreview = document.getElementById('file-preview');
+
+    fileInput.addEventListener('change', function () {
+        const files = fileInput.files;
+        filePreview.innerHTML = ''; // Clear previous previews
+
+        if (files.length === 1) {
+            const file = files[0];
+            if (file.type.startsWith('image/')) {
+                // Show image preview if it's a single image
+                const imgPreview = document.createElement('img');
+                imgPreview.src = URL.createObjectURL(file);
+                filePreview.appendChild(imgPreview);
+            } else {
+                filePreview.textContent = 'File selected: ' + file.name;
+            }
+        } else if (files.length > 1) {
+            // If multiple files, just show the number of files
+            filePreview.textContent = files.length + ' files selected';
+        }
+    });
+
+    // Script for auto-scrolling and chat functionality
+    const chatBody = document.getElementById('chat-body');
+
+    document.getElementById('test-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // Get user input and display it as a chat bubble
+        const userInput = document.getElementById('context').value;
+        if (userInput) {
+            const userBubble = document.createElement('div');
+            userBubble.classList.add('chat-bubble', 'user');
+            userBubble.textContent = userInput;
+            chatBody.appendChild(userBubble);
+
+            // Scroll to the bottom
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // Collect the form data (context and images)
+        const formData = new FormData(this);
+
+        // Send the data to the backend (Flask)
+        fetch('/generate', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Create a bot bubble with the formatted response data
+            const botBubble = document.createElement('div');
+            botBubble.classList.add('chat-bubble', 'bot');
+            // Use <pre> tag to preserve formatting (newlines, spaces)
+            const preElement = document.createElement('pre');
+            preElement.textContent = data.response;
+            botBubble.appendChild(preElement);
+            chatBody.appendChild(botBubble);
+
+            // Scroll to the bottom
+            chatBody.scrollTop = chatBody.scrollHeight;
+        });
+
+        // Clear the input field after submission
+        document.getElementById('context').value = '';
+    });
+</script>
+
+</body>
+</html>
